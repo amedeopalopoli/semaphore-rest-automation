@@ -7,7 +7,7 @@ The Ansible playbook is going to reference a Semaphore REST API server by creati
 ----
 
 ### **Aim**
-----
+
 [Ansible](https://www.ansible.com/) is an open source automation and orchestration tool for software provisioning, configuration management, and software deployment.
 
 Nevertheless, it's a good practice to integrate **playbooks** with UI systems and provide a smart workflow to even users who prefers better to interact with a UI based interface to invoke their own jobs.
