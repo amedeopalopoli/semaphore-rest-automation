@@ -1,0 +1,73 @@
+---
+
+- name: Get Inventory for the Template Repository
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/inventory"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: inventories
+
+
+- name: set variable to check if the inventory does exist
+  set_fact: 
+    inventory_created: true
+    semaphore_inventory_id: "{{ item.id }}"    
+  when: item.name == project_id 
+  with_items: "{{ inventories.json }}"
+
+- debug:
+    msg: "the inventory is already existing. No need to create that one."
+  when: 
+    - inventory_created is defined
+    - inventory_created 
+
+- debug:
+    msg: "No inventory with the name has been found. It's going to be created."
+  when: 
+    - inventory_created is not defined
+
+- name: Setup Inventory for the Template Repository
+  uri:
+    method: POST
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/inventory"
+    body_format: json
+    status_code: 201
+    body: '{ "name": "{{ project_id }}", "project_id": {{ semaphore_project_id }}, "inventory": "hosts", "ssh_key_id": {{ semaphore_key_id | int }}, "become_key_id": null, "type": "file"}}'
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  when: 
+    - inventory_created is not defined
+
+- name: Get Inventory for the Template Repository
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/inventory"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: inventories
+  when: 
+    - inventory_created is not defined
+
+
+- name: set variable to check if the inventory does exist
+  set_fact: 
+    inventory_created: true
+    semaphore_inventory_id: "{{ item.id }}"    
+  when:
+    - inventory_created is not defined 
+    - item.name == project_id 
+  with_items: "{{ inventories.json }}"
+
+- debug:
+    msg: "Project Inventory ID = {{ semaphore_inventory_id }} " 

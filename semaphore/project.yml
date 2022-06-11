@@ -1,0 +1,69 @@
+---
+
+- name: Fetch projects to find if exist the project with the same name
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/projects"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ token.cookies.semaphore }}"
+  ignore_errors: yes 
+  register: projects
+
+- name: set variable to check if project neither exist
+  set_fact: 
+    project_created: true
+    semaphore_project_id: "{{ item.id }}"    
+  when: item.name == "{{ project_id  | quote }}"
+  with_items: "{{ projects.json }}"
+
+- name: set variable to check if project neither exist
+  set_fact: project_created=false
+  when: 
+    - project_created is not defined
+    
+- debug:
+    msg: "the project is already existing. No need to create that one."
+  when: 
+    - project_created 
+
+- debug:
+    msg: "No project with the name has been found. It's going to be created."
+  when: 
+    - project_created == false
+
+- name: Create the project Ansible Semaphore
+  uri:
+    method: POST
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/projects"
+    body_format: json
+    status_code: 201
+    body:
+      name: "{{ project_id }}"
+      alert: true
+    headers:
+      Cookie: "semaphore={{ token.cookies.semaphore }}"
+  register: created_project
+  when: 
+    - project_created == false 
+
+- name: Show Project Creation Output to GET ID
+  debug:
+    msg: "{{ created_project.json.id | int }}"
+  register: created_project_id
+  when: 
+    - project_created == false
+
+- name: set variable to check if project neither exist
+  set_fact: 
+    semaphore_project_id: "{{ created_project_id.msg | int }}"
+  when: 
+    - project_created == false
+  
+- debug:
+    msg: "Project with id = {{ semaphore_project_id }}"

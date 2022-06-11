@@ -1,0 +1,72 @@
+---
+
+- name: Get Semaphore Repositories
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/repositories"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: repositories
+
+- name: set variable to check if repository does exist
+  set_fact: 
+    repository_created: true
+    semaphore_repository_id: "{{ item.id }}"    
+  when: item.name == project_id 
+  with_items: "{{ repositories.json }}"
+
+- debug:
+    msg: "the repository is already existing. No need to create that one."
+  when: 
+    - repository_created is defined
+    - repository_created 
+
+- debug:
+    msg: "No repository with the name has been found. It's going to be created."
+  when: 
+    - repository_created is not defined
+
+- name: Setup Git Repository
+  uri:
+    method: POST
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/repositories"
+    body_format: json
+    status_code: 204
+    body: '{ "name": "{{ project_id }}", "project_id": {{ semaphore_project_id }}, "git_url": "https://oauth2:{{ pat }}@{{ git_repo }}", "git_branch": "develop", "ssh_key_id": {{ semaphore_key_id | int }} }}'
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: created_project_repository
+  when: 
+    - repository_created is not defined
+  
+- name: Get Semaphore Repositories
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/repositories"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: repositories
+  when: 
+    - repository_created is not defined
+  
+- name: set variable to check if repository does exist
+  set_fact: 
+    repository_created: true
+    semaphore_repository_id: "{{ item.id }}"    
+  when: 
+    - repository_created is not defined
+    - item.name == project_id 
+  with_items: "{{ repositories.json }}"
+
+- debug:
+    msg: "Project Repository ID = {{ semaphore_repository_id }} " 

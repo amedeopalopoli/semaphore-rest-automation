@@ -1,0 +1,13 @@
+---
+  - name: Setup Develop Schedule Task Template
+    uri:
+      method: POST
+      validate_certs: no
+      return_content: yes
+      url: "{{ automation }}/project/{{ semaphore_project_id }}/schedules"
+      body_format: json
+      status_code: 201
+      body: '{ "project_id": {{ semaphore_project_id }},"template_id": {{ template_id }}, "cron_format": "{{ cron }}" }'
+      headers:
+        Cookie: "semaphore={{ semaphore_token }}"
+

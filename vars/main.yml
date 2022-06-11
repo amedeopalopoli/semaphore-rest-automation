@@ -1,0 +1,27 @@
+# OVERALL VARIABLES
+
+#Base URL Semaphore REST API Server -> <FQDN>/api
+automation: "https://yourautomationurl/api"
+
+#Basic Auth to Login to REST API Semaphore Server
+user: "username"
+password: "password"
+
+#Personal Access Token to clone the code from your Ansible Repo
+pat: "your_personal_access_token" 
+git_repo: "gitlab.com/your_repo.git"
+
+#Semaphore Key Type to clone the code through OAUTH2 Personal Access Token
+semaphore_key_store_name: "None"
+semaphore_key_store_type: "none"
+
+## PROJECT SPECIFIC VARIABLES
+project_id: "semaphore_example"
+
+envs:
+  - name: develop
+    cron: "0 0 * * *"
+  - name: staging
+    cron: "0 0 * * *"
+  - name: production
+    cron: "0 0 * * *"

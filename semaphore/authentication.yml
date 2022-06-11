@@ -1,0 +1,22 @@
+---
+
+- name: Authenticate to API and retrieve authentication token
+  uri:
+    method: POST
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/auth/login"
+    body_format: json
+    status_code: 204
+    body:
+      auth: "{{ user }}"
+      password: "{{ password }}"
+  register: token
+
+- name: Show authentication token
+  debug:
+    msg: "Authentication Token = {{ token.cookies.semaphore }}"
+
+- name: set Authentication Token Variable
+  set_fact: 
+    semaphore_token: "{{ token.cookies.semaphore }}"

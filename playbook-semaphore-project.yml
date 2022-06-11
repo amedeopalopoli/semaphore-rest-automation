@@ -1,0 +1,55 @@
+- name: Semaphore Integration Play
+  hosts: localhost
+  connection: local
+  vars_files:
+    - vars/main.yml    
+  tasks:
+
+  # AUTHENTICATION SECTION
+  - import_tasks: semaphore/authentication.yml
+
+  # PROJECT SECTION 
+  - import_tasks: semaphore/project.yml
+  
+  # SSH_KEY SECTION
+  - import_tasks: semaphore/key_store.yml
+
+  # REPOSITORY SECTION
+  - import_tasks: semaphore/repository.yml
+
+# INVENTORY SECTION
+  - import_tasks: semaphore/inventory.yml
+
+# ENVIRONMENTS SECTION
+  - include_tasks: semaphore/environments/{{ external_item.name }}.yml
+    with_items: " {{ envs }}"
+    loop_control:
+      loop_var: external_item
+
+# EXAMPLE TASK TEMPLATE SECTION
+  - include: semaphore/task_template.yml 
+    vars: 
+      env: "{{ external_item.name }}"
+      topic: "example"
+      playbook: "playbook-example.yml"
+      repository_id: "{{ semaphore_repository_id }}"
+      inventory_id: "{{ semaphore_inventory_id }}"      
+      env_id: "{{  vars['env_'+ external_item.name + '_id'] }}"      
+    with_items: " {{ envs }}"
+    loop_control:
+      loop_var: external_item
+
+# SCHEDULE SECTION
+  - include: semaphore/schedule.yml 
+    vars: 
+      env: "{{ external_item.name }}"
+      topic: "example"
+      playbook: "playbook-example.yml"
+      template_id: "{{ vars[ topic + '_template_' + external_item.name + '_id'] }}"
+      repository_id: "{{ semaphore_repository_id }}"
+      inventory_id: "{{ semaphore_inventory_id }}"      
+      env_id: "{{  vars['env_'+ external_item.name + '_id'] }}"      
+      cron: "{{ external_item.cron }}"
+    with_items: " {{ envs }}"
+    loop_control:
+      loop_var: external_item

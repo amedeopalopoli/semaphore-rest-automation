@@ -1,0 +1,72 @@
+---
+- name: Fetch environments 
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/environment"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  ignore_errors: yes 
+  register: environments
+
+- name: set staging environment Id 
+  set_fact: 
+    "env_staging_id": "{{ item.id }}"
+  when: 
+    - item.name == "Staging"
+  with_items: "{{ environments.json }}"
+
+- name: Create staging Environment
+  uri:
+    method: POST
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/environment"
+    body_format: json
+    status_code: 204
+    body: '{ "name": "Staging", "project_id": {{ semaphore_project_id }}, "password": "string", "json": "{}" }'
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  when: 
+    - env_staging_id is not defined 
+
+- name: Update staging Environment
+  uri:
+    method: PUT
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/environment/{{ env_staging_id }}"
+    body_format: json
+    status_code: 204
+    body: '{ "name": "Staging", "id": {{ env_staging_id }},"project_id": {{ semaphore_project_id }}, "password": "string", "json": "{}" }'
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: output_env_updated
+  when: 
+    - env_staging_id is defined 
+  
+- name: Fetch environments after created the new env
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/environment"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  ignore_errors: yes 
+  register: environments
+  when:
+    - env_staging_id is not defined 
+
+- name: set staging environment Id 
+  set_fact: 
+    "env_staging_id": "{{ item.id }}"
+  when: 
+    - env_staging_id is not defined 
+    - item.name == "Staging"
+  with_items: "{{ environments.json }}"

@@ -1,0 +1,70 @@
+---
+- name: GET SSH_KEY ID for the project
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/keys?sort=name&&order=asc"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: created_project_ssh_key
+
+- name: set variable to check if the key does exist
+  set_fact: 
+    semaphore_key_store_present: true
+    semaphore_key_id: "{{ item.id }}"
+  when: item.name == semaphore_key_store_name  
+  with_items: "{{ created_project_ssh_key.json }}"
+
+- debug:
+    msg: "the key store has been already created "
+  when: 
+    - semaphore_key_store_present is defined
+    - semaphore_key_store_present 
+
+- debug:
+    msg: "the key store is not already present. Should be created"
+  when: 
+    - semaphore_key_store_present is not defined
+
+- name: Setup Key None Entry for the Gitlab Repo
+  uri:
+    method: POST
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/keys"
+    body_format: json
+    status_code: 204
+    body: '{ "name": "{{ semaphore_key_store_name }}", "type": "{{ semaphore_key_store_type }}", "project_id": {{ semaphore_project_id}}}'
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  when: 
+    - semaphore_key_store_present is not defined
+
+- name: GET SSH_KEY ID for the project
+  uri:
+    method: GET
+    validate_certs: no
+    return_content: yes
+    url: "{{ automation }}/project/{{ semaphore_project_id }}/keys?sort=name&&order=asc"
+    body_format: json
+    status_code: 200
+    headers:
+      Cookie: "semaphore={{ semaphore_token }}"
+  register: created_project_ssh_key
+  when:
+    - semaphore_key_store_present is not defined
+
+- name: set variable to check if the key does exist
+  set_fact: 
+    semaphore_key_store_present: true
+    semaphore_key_id: "{{ item.id }}"
+  when:
+    - semaphore_key_store_present is not defined
+    - item.name == semaphore_key_store_name  
+  with_items: "{{ created_project_ssh_key.json }}"
+
+- debug:
+    msg: "Project Key Store ID = {{ semaphore_key_id }} " 
