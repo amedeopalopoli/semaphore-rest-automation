@@ -78,6 +78,10 @@ envs:
     cron: "0 0 * * *"
 ```
 
+### **How to use**
+----
+
+> **$ ansible-playbook playbook-semaphore-project.yml**
 ### **Contributing**
 ----
 1. Fork the repository
