@@ -1,6 +1,6 @@
 - name: Semaphore Integration Play
-  hosts: localhost
-  connection: local
+  hosts: "{{ variable_host | default('localhost') }}"
+  connection: "{{ variable_connection | default('local') }}"
   vars_files:
     - vars/main.yml    
   tasks:
